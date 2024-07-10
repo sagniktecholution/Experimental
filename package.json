@@ -9,14 +9,10 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "check": "eslint src --fix",
     "pretify": "prettier . --write",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "husky"
   },
-  "pre-commit": [
-    "pretify",
-    "check"
-  ],
   "dependencies": {
-    "pre-commit": "^1.2.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -32,6 +28,7 @@
     "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.8",
+    "husky": "^9.0.11",
     "prettier": "3.3.2",
     "typescript": "^5.2.2",
     "vite": "^5.3.1"
