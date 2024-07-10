@@ -42,7 +42,7 @@ module.exports = {
     ],
     'import/no-default-export': 'error',
     // Recommended Rules (RR)
-    'indent': ['error', 2, { 'SwitchCase': 1 }],
+    indent: ['error', 2, { SwitchCase: 1 }],
     'max-len': ['error', { code: 80 }],
     'one-var': ['error', 'never'],
     'prefer-const': 'error',
@@ -50,7 +50,7 @@ module.exports = {
     'no-new-object': 'error',
     'no-new-wrappers': 'error',
     'default-case': 'error',
-    'curly': ['error', 'all'],
+    curly: ['error', 'all'],
     'no-with': 'error',
     'constructor-super': 'error',
     'new-parens': 'error',
@@ -60,4 +60,4 @@ module.exports = {
       version: 'detect',
     },
   },
-}
+};
