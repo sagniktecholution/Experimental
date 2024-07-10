@@ -7,7 +7,7 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
   ],
-  ignorePatterns: ['dist', '.eslintrc.cjs', 'commitlint.config.js'],
+  ignorePatterns: ['dist', '.eslintrc.cjs', 'commitlint.config.js','vite.config.ts'],
   parser: '@typescript-eslint/parser',
   plugins: ['react-refresh', '@typescript-eslint', 'import', 'filenames'],
   rules: {
@@ -15,6 +15,7 @@ module.exports = {
       'warn',
       { allowConstantExport: true },
     ],
+    'react/react-in-jsx-scope': 'off',
     // Custom Rules (CR)
     'filenames/match-regex': ['error', '^[a-z0-9._-]+$', true],
     '@typescript-eslint/naming-convention': [
@@ -33,7 +34,7 @@ module.exports = {
       },
       {
         selector: 'function',
-        format: ['camelCase'],
+        format: ['camelCase','PascalCase'],
       },
       {
         selector: 'method',
