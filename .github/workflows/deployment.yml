@@ -28,7 +28,10 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Build project
+        run: npm test
+
       - name: Deploy to server
         run: |
-          # Replace <SERVER_IP> with the actual IP address of your server
+          # Sample deploy to the server
         #   ssh user@<SERVER_IP> "cd /path/to/project && git pull && npm install && npm run build"
