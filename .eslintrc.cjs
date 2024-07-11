@@ -7,9 +7,22 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:react-hooks/recommended',
   ],
-  ignorePatterns: ['dist', '.eslintrc.cjs', 'commitlint.config.js','vite.config.ts'],
+  ignorePatterns: [
+    'dist',
+    '.eslintrc.cjs',
+    'commitlint.config.js',
+    'vite.config.ts',
+  ],
   parser: '@typescript-eslint/parser',
   plugins: ['react-refresh', '@typescript-eslint', 'import', 'filenames'],
+  overrides: [
+    {
+      files: ['__test__/**/*'],
+      env: {
+        jest: true,
+      },
+    },
+  ],
   rules: {
     'react-refresh/only-export-components': [
       'warn',
@@ -34,7 +47,7 @@ module.exports = {
       },
       {
         selector: 'function',
-        format: ['camelCase','PascalCase'],
+        format: ['camelCase', 'PascalCase'],
       },
       {
         selector: 'method',
