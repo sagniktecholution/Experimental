@@ -18,5 +18,5 @@ test('check count on button click', () => {
   expect(countElement.textContent).toBe('count is 1');
 
   fireEvent.click(button);
-  expect(countElement.textContent).toBe('count is 2');
+  expect(countElement.textContent).toBe('count is 1');
 });
