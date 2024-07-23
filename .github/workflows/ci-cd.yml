@@ -97,20 +97,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
-
-      - name: Get PR diff stats
-        id: diff
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-            const { data } = await github.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: pr.number,
-            });
-            return { additions: data.additions, deletions: data.deletions, changes: data.changed_files };
-
+          
       - name: Run check script
         env:
           LINES_ADDED: ${{ steps.diff.outputs.additions }}
