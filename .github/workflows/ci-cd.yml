@@ -113,10 +113,15 @@ jobs:
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             return { changedFiles: JSON.stringify(changedFiles) };
 
+      - name: Debug Changed Files Output
+        run: |
+          echo "Changed files output: '${{ steps.changed-files.outputs.changedFiles }}'"
+
       - name: Get content of changed files
         id: file-contents
         run: |
           CHANGED_FILES=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
+          echo "Parsed changed files: $CHANGED_FILES"
           CONTENTS=""
           for FILE in $CHANGED_FILES; do
             if [ -f "$FILE" ]; then
