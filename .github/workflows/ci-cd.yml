@@ -85,3 +85,57 @@ jobs:
         run: |
           # Sample deploy to the server
           # ssh user@<SERVER_IP> "cd /path/to/project && git pull && npm install && npm run build"
+  pr-ruleset-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get list of changed files
+        id: changed-files
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const changedFiles = files.map(file => file.filename);
+            console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
+            return { changedFiles: JSON.stringify(changedFiles) };
+
+      - name: Get content of changed files
+        id: file-contents
+        run: |
+          CHANGED_FILES=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -c '.[]')
+          CONTENTS=""
+          for file in $CHANGED_FILES; do
+            FILE=$(echo $file | tr -d '"')
+            if [ -f "$FILE" ]; then
+              CONTENT=$(cat "$FILE" | base64 | tr -d '\n')
+              CONTENTS="$CONTENTS{\"filename\":\"$FILE\",\"content\":\"$CONTENT\"},"
+            else
+              echo "File $FILE not found!"
+            fi
+          done
+          CONTENTS="[${CONTENTS%,}]"
+          echo "file-contents=$CONTENTS" >> $GITHUB_ENV
+
+      - name: Call the external API
+        id: call-api
+        run: |
+          FILE_CONTENTS=${{ env.file-contents }}
+          API_RESPONSE=$(curl -X POST -H "Content-Type: application/json" -d "{\"files\":${FILE_CONTENTS}}" https://b48c-139-167-129-22.ngrok-free.app/recieve_content_from_github)
+          echo "api-response=$API_RESPONSE" >> $GITHUB_ENV
+
+      - name: Check API response and block PR if needed
+        run: |
+          API_RESPONSE=${{ env.api-response }}
+          if [[ "$API_RESPONSE" == *"fail"* ]]; then
+            echo "Blocking PR merge based on API response"
+            exit 1
+          else
+            echo "PR can be merged"
+          fi
