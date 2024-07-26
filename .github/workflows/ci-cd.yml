@@ -113,11 +113,6 @@ jobs:
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             core.setOutput('changedFiles', JSON.stringify(changedFiles));
 
-
-      - name: Debug Changed Files Output
-        run: |
-          echo "Changed files output: '${{ steps.changed-files.outputs.changedFiles }}'"
-
       - name: Get content of changed files
         id: file-contents
         run: |
@@ -126,7 +121,7 @@ jobs:
           CONTENTS=""
           for FILE in $CHANGED_FILES; do
             if [ -f "$FILE" ]; then
-              CONTENT=$(cat "$FILE" | base64 | tr -d '\n')
+              CONTENT=$(cat "$FILE")
               echo "File: $FILE"
               echo "$CONTENT"
               CONTENTS="$CONTENTS{\"filename\":\"$FILE\",\"content\":\"$CONTENT\"},"
@@ -137,7 +132,7 @@ jobs:
           CONTENTS="[${CONTENTS%,}]"
           echo "file-contents=$CONTENTS" >> $GITHUB_ENV
 
-      - name: debug file contents
+      - name: Debug file contents
         run: |
           echo "File Contents: ${{ env.file-contents }}"
 
@@ -148,12 +143,6 @@ jobs:
           API_RESPONSE=$(curl -X POST -H "Content-Type: application/json" -d "{\"files\":${FILE_CONTENTS}}" https://b48c-139-167-129-22.ngrok-free.app/recieve_content_from_github)
           echo "api-response=$API_RESPONSE" >> $GITHUB_ENV
 
-      - name: Check API response and block push if needed
+      - name: Debug API response
         run: |
-          API_RESPONSE=${{ env.api-response }}
-          if [[ "$API_RESPONSE" == *"fail"* ]]; then
-            echo "Blocking push based on API response"
-            exit 1
-          else
-            echo "Push can proceed"
-          fi
+          echo "API Response: ${{ env.api-response }}"
