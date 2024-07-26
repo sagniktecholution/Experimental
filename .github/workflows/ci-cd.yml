@@ -122,6 +122,8 @@ jobs:
             FILE=$(echo $file | tr -d '"')
             if [ -f "$FILE" ]; then
               CONTENT=$(cat "$FILE" | base64 | tr -d '\n')
+              echo "File: $FILE"
+              echo "$CONTENT"
               CONTENTS="$CONTENTS{\"filename\":\"$FILE\",\"content\":\"$CONTENT\"},"
             else
               echo "File $FILE not found!"
