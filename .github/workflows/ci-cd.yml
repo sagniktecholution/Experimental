@@ -85,7 +85,8 @@ jobs:
         run: |
           # Sample deploy to the server
           # ssh user@<SERVER_IP> "cd /path/to/project && git pull && npm install && npm run build"
-  pr-ruleset-check:
+
+  push-ruleset-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -96,12 +97,12 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const { data: files } = await github.rest.pulls.listFiles({
+            const { data: files } = await github.rest.repos.listFiles({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
+              ref: context.ref,
             });
-            const changedFiles = files.map(file => file.filename);
+            const changedFiles = files.filter(file => file.status === 'modified').map(file => file.filename);
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             return { changedFiles: JSON.stringify(changedFiles) };
 
@@ -129,12 +130,12 @@ jobs:
           API_RESPONSE=$(curl -X POST -H "Content-Type: application/json" -d "{\"files\":${FILE_CONTENTS}}" https://b48c-139-167-129-22.ngrok-free.app/recieve_content_from_github)
           echo "api-response=$API_RESPONSE" >> $GITHUB_ENV
 
-      - name: Check API response and block PR if needed
+      - name: Check API response and block push if needed
         run: |
           API_RESPONSE=${{ env.api-response }}
           if [[ "$API_RESPONSE" == *"fail"* ]]; then
-            echo "Blocking PR merge based on API response"
+            echo "Blocking push based on API response"
             exit 1
           else
-            echo "PR can be merged"
+            echo "Push can proceed"
           fi
