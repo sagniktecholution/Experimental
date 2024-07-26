@@ -121,28 +121,28 @@ jobs:
           CONTENTS=""
           for FILE in $CHANGED_FILES; do
             if [ -f "$FILE" ]; then
-              CONTENT=$(cat "$FILE")
+              CONTENT=$(cat "$FILE" | jq -Rs .)
               echo "File: $FILE"
               echo "$CONTENT"
-              CONTENTS="$CONTENTS{\"filename\":\"$FILE\",\"content\":\"$CONTENT\"},"
+              CONTENTS="$CONTENTS{\"filename\":\"$FILE\",\"content\":$CONTENT},"
             else
               echo "File $FILE not found!"
             fi
           done
           CONTENTS="[${CONTENTS%,}]"
-          echo "::set-output name=file-contents::$CONTENTS"
+          echo "FILE_CONTENTS=$CONTENTS" >> $GITHUB_ENV
 
       - name: Debug file contents
         run: |
-          echo "File Contents: ${{ steps.file-contents.outputs.file-contents }}"
+          echo "File Contents: ${{ env.FILE_CONTENTS }}"
 
       - name: Call the external API
         id: call-api
         run: |
-          FILE_CONTENTS="${{ steps.file-contents.outputs.file-contents }}"
+          FILE_CONTENTS="${{ env.FILE_CONTENTS }}"
           echo "File Contents to be sent: $FILE_CONTENTS"
           API_RESPONSE=$(curl -X POST -H "Content-Type: application/json" -d "{\"files\":${FILE_CONTENTS}}" https://b48c-139-167-129-22.ngrok-free.app/recieve_content_from_github)
-          echo "::set-output name=api-response::$API_RESPONSE"
+          echo "API_RESPONSE=$API_RESPONSE" >> $GITHUB_ENV
 
       - name: Debug API response
         run: |
