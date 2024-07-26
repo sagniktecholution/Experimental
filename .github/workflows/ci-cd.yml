@@ -101,13 +101,15 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const commitSha = process.env.COMMIT_SHA;
-            const { data: files } = await github.rest.repos.listCommits({
+            const baseSha = context.payload.before;
+            const headSha = context.payload.after;
+            const { data: comparison } = await github.rest.repos.compareCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              sha: commitSha,
+              base: baseSha,
+              head: headSha,
             });
-            const changedFiles = files.map(file => file.filename);
+            const changedFiles = comparison.files.map(file => file.filename);
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             return { changedFiles: JSON.stringify(changedFiles) };
 
