@@ -112,7 +112,7 @@ jobs:
             const changedFiles = comparison.files.map(file => file.filename);
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             core.setOutput('changedFiles', JSON.stringify(changedFiles));
-
+    
       - name: Get content of changed files
         id: file-contents
         run: |
@@ -139,7 +139,8 @@ jobs:
       - name: Call the external API
         id: call-api
         run: |
-          FILE_CONTENTS=${{ env.file-contents }}
+          FILE_CONTENTS="${{ env.file-contents }}"
+          echo "File Contents to be sent: $FILE_CONTENTS"
           API_RESPONSE=$(curl -X POST -H "Content-Type: application/json" -d "{\"files\":${FILE_CONTENTS}}" https://b48c-139-167-129-22.ngrok-free.app/recieve_content_from_github)
           echo "api-response=$API_RESPONSE" >> $GITHUB_ENV
 
