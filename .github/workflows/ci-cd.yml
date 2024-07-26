@@ -87,7 +87,6 @@ jobs:
           # ssh user@<SERVER_IP> "cd /path/to/project && git pull && npm install && npm run build"
   pr-ruleset-check:
     runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
