@@ -92,17 +92,22 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Get the commit SHA
+        id: commit-sha
+        run: echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
       - name: Get list of changed files
         id: changed-files
         uses: actions/github-script@v6
         with:
           script: |
-            const { data: files } = await github.rest.repos.listFiles({
+            const commitSha = process.env.COMMIT_SHA;
+            const { data: files } = await github.rest.repos.listCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: context.ref,
+              sha: commitSha,
             });
-            const changedFiles = files.filter(file => file.status === 'modified').map(file => file.filename);
+            const changedFiles = files.map(file => file.filename);
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             return { changedFiles: JSON.stringify(changedFiles) };
 
