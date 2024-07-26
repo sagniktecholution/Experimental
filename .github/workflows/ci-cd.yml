@@ -116,10 +116,9 @@ jobs:
       - name: Get content of changed files
         id: file-contents
         run: |
-          CHANGED_FILES=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -c '.[]')
+          CHANGED_FILES=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
           CONTENTS=""
-          for file in $CHANGED_FILES; do
-            FILE=$(echo $file | tr -d '"')
+          for FILE in $CHANGED_FILES; do
             if [ -f "$FILE" ]; then
               CONTENT=$(cat "$FILE" | base64 | tr -d '\n')
               echo "File: $FILE"
@@ -131,7 +130,7 @@ jobs:
           done
           CONTENTS="[${CONTENTS%,}]"
           echo "file-contents=$CONTENTS" >> $GITHUB_ENV
-      
+
       - name: debug file contents
         run: |
           echo "File Contents: ${{ env.file-contents }}"
