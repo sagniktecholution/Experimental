@@ -111,7 +111,8 @@ jobs:
             });
             const changedFiles = comparison.files.map(file => file.filename);
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
-            return { changedFiles: JSON.stringify(changedFiles) };
+            core.setOutput('changedFiles', JSON.stringify(changedFiles));
+
 
       - name: Debug Changed Files Output
         run: |
