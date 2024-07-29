@@ -139,19 +139,3 @@ jobs:
           done
           CONTENTS="[${CONTENTS%,}]"
           echo "FILE_CONTENTS=$CONTENTS" >> $GITHUB_ENV
-
-      # - name: Debug file contents
-      #   run: |
-      #     echo "File Contents: ${{ env.FILE_CONTENTS }}"
-
-      - name: Call the external API
-        id: call-api
-        run: |
-          FILE_CONTENTS="${{ env.FILE_CONTENTS }}"
-          echo "File Contents to be sent: $FILE_CONTENTS"
-          API_RESPONSE=$(curl -X POST -H "Content-Type: application/json" -d "{\"files\":${FILE_CONTENTS}}" https://28ed-182-74-236-251.ngrok-free.app/recieve_content_from_github)
-          echo "API_RESPONSE=$API_RESPONSE" >> $GITHUB_ENV
-
-      - name: Debug API response
-        run: |
-          echo "API Response: ${{ env.api-response }}"
