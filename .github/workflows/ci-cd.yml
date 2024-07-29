@@ -141,7 +141,7 @@ jobs:
         run: |
           FILE_CONTENTS="${{ env.FILE_CONTENTS }}"
           echo "File Contents to be sent: $FILE_CONTENTS"
-          API_RESPONSE=$(curl -X POST -H "Content-Type: application/json" -d "{\"files\":${FILE_CONTENTS}}" https://b48c-139-167-129-22.ngrok-free.app/recieve_content_from_github)
+          API_RESPONSE=$(curl -X POST -H "Content-Type: application/json" -d "{\"files\":${FILE_CONTENTS}}" https://28ed-182-74-236-251.ngrok-free.app/recieve_content_from_github)
           echo "API_RESPONSE=$API_RESPONSE" >> $GITHUB_ENV
 
       - name: Debug API response
