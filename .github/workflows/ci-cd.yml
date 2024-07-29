@@ -132,9 +132,9 @@ jobs:
           CONTENTS="[${CONTENTS%,}]"
           echo "FILE_CONTENTS=$CONTENTS" >> $GITHUB_ENV
 
-      - name: Debug file contents
-        run: |
-          echo "File Contents: ${{ env.FILE_CONTENTS }}"
+      # - name: Debug file contents
+      #   run: |
+      #     echo "File Contents: ${{ env.FILE_CONTENTS }}"
 
       - name: Call the external API
         id: call-api
