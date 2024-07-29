@@ -119,6 +119,7 @@ jobs:
           for file in $changed_files; do
             curl_cmd="$curl_cmd --form files=@$file"
           done
+          echo "Executing: $curl_cmd"
           eval $curl_cmd
       - name: Get content of changed files
         id: file-contents
