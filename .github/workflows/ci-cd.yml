@@ -1,0 +1,141 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  code-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Code lint
+        run: npm run lint
+
+  build:
+    needs: code-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+  test:
+    needs:
+      - code-check
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Test project
+        run: npm test
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    needs:
+      - code-check
+      - build
+      - test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy to server
+        id: deployment
+        run: |
+          # Sample deploy to the server
+          # ssh user@<SERVER_IP> "cd /path/to/project && git pull && npm install && npm run build"
+
+  push-ruleset-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get the commit SHA
+        id: commit-sha
+        run: echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+
+      - name: Get list of changed files
+        id: changed-files
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const baseSha = context.payload.before;
+            const headSha = context.payload.after;
+            const { data: comparison } = await github.rest.repos.compareCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              base: baseSha,
+              head: headSha,
+            });
+            const changedFiles = comparison.files.map(file => file.filename);
+            console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
+            core.setOutput('changedFiles', JSON.stringify(changedFiles));
+      - name: Send changed files to endpoint
+        run: |
+          changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
+          curl_cmd="curl --location 'https://5ddc-182-74-236-251.ngrok-free.app/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4"
+          for file in $changed_files; do
+            curl_cmd="$curl_cmd --form files=@$file"
+          done
+          echo "Executing: $curl_cmd"
+          eval $curl_cmd
+      - name: Get content of changed files
+        id: file-contents
+        run: |
+          CHANGED_FILES=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
+          echo "Parsed changed files: $CHANGED_FILES"
+          CONTENTS=""
+          for FILE in $CHANGED_FILES; do
+            if [ -f "$FILE" ]; then
+              CONTENT=$(cat "$FILE" | jq -Rs .)
+              echo "File: $FILE"
+              echo "$CONTENT"
+              CONTENTS="$CONTENTS{\"filename\":\"$FILE\",\"content\":$CONTENT},"
+            else
+              echo "File $FILE not found!"
+            fi
+          done
+          CONTENTS="[${CONTENTS%,}]"
+          echo "FILE_CONTENTS=$CONTENTS" >> $GITHUB_ENV
