@@ -120,7 +120,12 @@ jobs:
             curl_cmd="$curl_cmd --form files=@$file"
           done
           echo "Executing: $curl_cmd"
-          eval $curl_cmd
+          response=$(eval $curl_cmd)
+          status=$(echo "$response" | jq -r '.status')
+          if [[ "$status" == "fail" ]]; then
+            echo "Error: Received status $status"
+            exit 1
+          fi
       - name: Get content of changed files
         id: file-contents
         run: |
