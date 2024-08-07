@@ -32,71 +32,96 @@ jobs:
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             core.setOutput('changedFiles', JSON.stringify(changedFiles));
       - name: Send changed files to endpoint
-        run: |
-          changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
-          curl_cmd="curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.1"
+        id: send-changed-files
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const changedFiles = JSON.parse(
+              '${{ steps.changed-files.outputs.changedFiles }}',
+            );
 
-          for file in $changed_files; do
-            if [[ -f $file ]]; then
-              curl_cmd="$curl_cmd --form files=@$file"
-            fi
-          done
+            const formData = new FormData();
+            formData.append('threshold', 0.1);
 
-          echo "Executing: $curl_cmd"
-          response=$(eval $curl_cmd)
+            changedFiles.forEach((file) => {
+              if (fs.existsSync(file)) {
+                formData.append('files', fs.createReadStream(file));
+              }
+            });
 
-          echo "Response: $response"
+            const response = await fetch(
+              'https://dev-appmod.techo.camp/pr_push_check/css_validation_api',
+              {
+                method: 'POST',
+                body: formData,
+              },
+            );
 
-          # Extract details from response array
-          status=$(echo "$response" | jq -r '.status')
+            if (!response.ok) {
+              throw new Error('Failed to send changed files to endpoint');
+            }
 
-          echo "Status: $status"
+            const data = await response.json();
+            console.log('Response:', data);
 
-          if [[ "$status" == "pass" ]]; then
-            echo "Status is pass. Skipping below commands."
-            exit 0
-          fi
+            if (data.status === 'pass') {
+              console.log('Status is pass. Skipping below commands.');
+              process.exit(0);
+            }
 
-          details=$(echo "$response" | jq -r '.details')
+            const { details } = data;
 
-          # Check if details is empty
-          if [[ -z "$details" ]]; then
-            echo "No details found. Exiting with error."
-            exit 1
-          fi
+            if (!details || !details.length) {
+              console.log('No details found. Exiting with error.');
+              process.exit(1);
+            }
 
-          # Loop through details and create PR comments
-          for detail in $(echo "$details" | jq -r '.[]'); do
-           
-            ai_response=$(echo "$detail" | jq -r '.ai_response')
-            suggestions=$(echo "$ai_response" | jq -r '.suggestions_set')
-            filename=$(echo "$detail" | jq -r '.file_information.file_name')
+            for (const detail of details) {
+              const { ai_response, file_information } = detail;
 
-            for suggestion in $(echo "$suggestions" | jq -r '.[]'); do
-              suggestion_description=$(echo "$suggestion" | jq -r '.suggestion_description')
-              line_start=$(echo "$suggestion" | jq -r '.line_start')
-              line_end=$(echo "$suggestion" | jq -r '.line_end')
+              for (const item of ai_response) {
+                const { helperText, suggestions_set } = item;
 
-              body="$suggestion_description"
-              updated_code=$(echo "$suggestion" | jq -r '.updated_code[]')
-               
-              echo "Updated code: $updated_code"
+                let body = helperText.join('\n');
 
-              if [[ ${#updated_code[@]} -eq 0 ]]; then
-                body_with_code="$body"
-              else
-                code_string=$(echo "$updated_code" | jq -r 'join("\n")')
-                body_with_code=$(printf "%s\n\n```suggestion\n%s```suggestion" "$body" "$code_string")
-              fi
+                for (const suggestion of suggestions_set) {
+                  const { suggestion_description, line_start, line_end, updated_code } =
+                    suggestion;
 
+                  body += `\n${suggestion_description}`;
 
-              echo "Body: $body_with_code"
+                  if (updated_code.length) {
+                    const code_string = updated_code.join('\n');
+                    body += '\n```suggestion\n' + code_string + '```suggestion';
+                  }
 
-              # Use the GitHub API to create a PR comment for each suggestion
-              curl -X POST \
-                -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-                -H "Accept: application/vnd.github.v3+json" \
-                -d "{\"body\": \"$body_with_code\", \"commit_id\": \"${{ github.event.pull_request.head.sha }}\", \"path\": \"$filename\", \"start_line\": $line_start, \"line\": $line_end, \"start_side\": "RIGHT", \"side\": "RIGHT" }" \
-                "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments"
-            done
-          done
+                  console.log('Body:', body);
+
+                  // Use the GitHub API to create a PR comment for each suggestion
+                  const commitRes = await fetch(
+                    `https://api.github.com/repos/${{github.repository}}/pulls/${{ github.event.pull_request.number}}/comments`,
+                    {
+                      method: 'POST',
+                      headers: {
+                        Authorization: `Bearer ${{ secrets.GITHUB_TOKEN }}`,
+                        Accept: 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify({
+                        body,
+                        commit_id: '${{ github.event.pull_request.head.sha }}',
+                        path: file_information.file_name,
+                        start_file: line_start,
+                        line: line_end,
+                        start_side: 'RIGHT',
+                        side: 'RIGHT',
+                      }),
+                    },
+                  );
+
+                  if (!commitRes.ok) {
+                    throw new Error('Failed to create PR comment');
+                  }
+                }
+              }
+            }
