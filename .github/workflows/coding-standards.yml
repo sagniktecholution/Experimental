@@ -60,12 +60,14 @@ jobs:
               },
             );
 
+            console.log("Response:", response);
+
             if (!response.ok) {
               throw new Error('Failed to send changed files to endpoint');
             }
 
             const data = await response.json();
-            console.log('Response:', data);
+            console.log('Data:', data);
 
             if (data.status === 'pass') {
               console.log('Status is pass. Skipping below commands.');
