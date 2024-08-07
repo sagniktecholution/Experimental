@@ -35,6 +35,7 @@ jobs:
         run: |
           changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
           curl_cmd="curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4"
+
           for file in $changed_files; do
             curl_cmd="$curl_cmd --form files=@$file"
           done
@@ -93,3 +94,4 @@ jobs:
                 -d "{\"body\": \"$body_with_code\", \"commit_id\": \"${{ github.event.pull_request.head.sha }}\", \"path\": \"$filename\", \"start_line\": $line_start, \"line\": $line_end, \"start_side\": "RIGHT", \"side\": "RIGHT" }" \
                 "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments"
             done
+          done
