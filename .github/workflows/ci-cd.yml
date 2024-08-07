@@ -119,28 +119,43 @@ jobs:
           for file in $changed_files; do
             curl_cmd="$curl_cmd --form files=@$file"
           done
+
           echo "Executing: $curl_cmd"
           response=$(eval $curl_cmd)
-          status=$(echo "$response" | jq -r '.status')
-          if [[ "$status" == "fail" ]]; then
-            echo "Error: Received status $status"
-            exit 1
-          fi
-      - name: Get content of changed files
-        id: file-contents
-        run: |
-          CHANGED_FILES=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
-          echo "Parsed changed files: $CHANGED_FILES"
-          CONTENTS=""
-          for FILE in $CHANGED_FILES; do
-            if [ -f "$FILE" ]; then
-              CONTENT=$(cat "$FILE" | jq -Rs .)
-              echo "File: $FILE"
-              echo "$CONTENT"
-              CONTENTS="$CONTENTS{\"filename\":\"$FILE\",\"content\":$CONTENT},"
-            else
-              echo "File $FILE not found!"
-            fi
-          done
-          CONTENTS="[${CONTENTS%,}]"
-          echo "FILE_CONTENTS=$CONTENTS" >> $GITHUB_ENV
+
+          # Extract details from response array
+          details=$(echo "$response" | jq -r '.details')
+
+          # Loop through details and create PR comments
+          for detail in $(echo "$details" | jq -r '.[]'); do
+           
+            ai_response=$(echo "$detail" | jq -r '.ai_response')
+            suggestions=$(echo "$ai_response" | jq -r '.suggestions_set')
+            filename=$(echo "$detail" | jq -r '.file_information.file_name')
+
+            for suggestion in $(echo "$suggestions" | jq -r '.[]'); do
+              suggestion_description=$(echo "$suggestion" | jq -r '.suggestion_description')
+              line_start=$(echo "$suggestion" | jq -r '.line_start')
+              line_end=$(echo "$suggestion" | jq -r '.line_end')
+
+              body="$suggestion_description"
+              updated_code=$(echo "$suggestion" | jq -r '.updated_code[]')
+               
+              echo "Updated code: $updated_code"
+
+              if [[ ${#updated_code[@]} -eq 0 ]]; then
+                body_with_code="$body"
+              else
+                body_with_code=$(printf "%s\n\n```suggestion\n%s```suggestion" "$body" "$updated_code")
+              fi
+
+
+              echo "Body: $body_with_code"
+
+              # Use the GitHub API to create a PR comment for each suggestion
+              curl -X POST \
+                -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                -H "Accept: application/vnd.github.v3+json" \
+                -d "{\"body\": \"$body_with_code\", \"commit_id\": \"${{ github.event.pull_request.head.sha }}\", \"path\": \"$filename\", \"start_line\": $line_start, \"line\": $line_end, \"start_side\": "RIGHT", \"side\": "RIGHT" }" \
+                "https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/comments"
+            done
