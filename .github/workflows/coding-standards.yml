@@ -45,12 +45,10 @@ jobs:
             const formData = new FormData();
             formData.append('threshold', '0.1');
 
-            changedFiles.forEach((file) => {
-              if (fs.existsSync(file)) {
-                const fileContent = fs.readFileSync(file);
-                formData.append('files', fileContent);
-              }
-            });
+            for (const file of changedFiles) {
+              const fileData = fs.readFileSync(file);
+              formData.append('files', fileData, file);
+            }
 
             console.log('Form data:', formData);
 
