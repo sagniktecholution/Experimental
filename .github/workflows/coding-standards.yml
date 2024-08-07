@@ -34,7 +34,7 @@ jobs:
       - name: Send changed files to endpoint
         run: |
           changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
-          curl_cmd="curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4"
+          curl_cmd="curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.1"
 
           for file in $changed_files; do
             if [[ -f $file ]]; then
