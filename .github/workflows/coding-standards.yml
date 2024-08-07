@@ -37,7 +37,6 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const fetch = require('node-fetch');
 
             const changedFiles = JSON.parse(
               '${{ steps.changed-files.outputs.changedFiles }}',
