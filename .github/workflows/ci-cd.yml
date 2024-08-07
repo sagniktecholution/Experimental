@@ -123,7 +123,9 @@ jobs:
           response=$(eval $curl_cmd)
           status=$(echo "$response" | jq -r '.status')
           if [[ "$status" == "fail" ]]; then
+            details=$(echo "$response" | jq -r '.details')
             echo "Error: Received status $status"
+            echo "details: Received details $details"
             exit 1
           fi
       - name: Get content of changed files
