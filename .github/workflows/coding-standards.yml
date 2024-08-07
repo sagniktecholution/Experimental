@@ -85,7 +85,8 @@ jobs:
               if [[ ${#updated_code[@]} -eq 0 ]]; then
                 body_with_code="$body"
               else
-                body_with_code=$(printf "%s\n\n```suggestion\n%s```suggestion" "$body" "$updated_code")
+                code_string=$(echo "$updated_code" | jq -r 'join("\n")')
+                body_with_code=$(printf "%s\n\n```suggestion\n%s```suggestion" "$body" "$code_string")
               fi
 
 
