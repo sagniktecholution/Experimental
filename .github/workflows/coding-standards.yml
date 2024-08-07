@@ -52,7 +52,13 @@ jobs:
             exit 0
           fi
 
-          details=$(echo "$response" | jq -r '.details')
+          details=$(echo "$response" | jq -r '.details' || echo "[]")
+
+          # Check if details is empty
+          if [[ -z "$details" ]]; then
+            echo "No details found. Exiting with error."
+            exit 1
+          fi
 
           # Loop through details and create PR comments
           for detail in $(echo "$details" | jq -r '.[]'); do
