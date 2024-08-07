@@ -48,6 +48,8 @@ jobs:
           # Extract details from response array
           status=$(echo "$response" | jq -r '.status')
 
+          echo "Status: $status"
+
           if [[ "$status" == "pass" ]]; then
             echo "Status is pass. Skipping below commands."
             exit 0
