@@ -43,12 +43,12 @@ jobs:
             );
 
             const formData = new FormData();
-            formData.append('threshold', 0.1);
-
+            formData.append('threshold', '0.1');
 
             changedFiles.forEach((file) => {
               if (fs.existsSync(file)) {
-              formData.append('files', fs.createReadStream(file));
+                const fileContent = fs.readFileSync(file);
+                formData.append('files', fileContent);
               }
             });
 
