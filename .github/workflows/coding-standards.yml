@@ -47,7 +47,7 @@ jobs:
 
             for (const file of changedFiles) {
                 const fileData = await fs.promises.readFile(file);
-                formData.append('files', fileData, file);
+                formData.append('files', fileData);
             }
 
             console.log('Form data:', formData);
