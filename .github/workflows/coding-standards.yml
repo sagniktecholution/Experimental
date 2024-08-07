@@ -1,0 +1,28 @@
+name: PR Workflow
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  coding-standards-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: List changed files
+        run: |
+          changed_files_string=$(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }})
+          changed_files=$(echo '$changed_files_string' | jq -r '.[]')
+          echo "Changed files: $changed_files"
+          curl_cmd="curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4"
+          for file in $changed_files; do
+            curl_cmd="$curl_cmd --form files=@$file"
+          done
+          echo "Executing: $curl_cmd"
+          response=$(eval $curl_cmd)
+          status=$(echo "$response" | jq -r '.status')
+          if [[ "$status" == "fail" ]]; then
+            echo "Error: Received status $status"
+            exit 1
+          fi
