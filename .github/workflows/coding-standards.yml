@@ -52,6 +52,8 @@ jobs:
               }
             });
 
+            console.log('Form data:', formData);
+
             const response = await fetch(
               'https://dev-appmod.techo.camp/pr_push_check/css_validation_api',
               {
