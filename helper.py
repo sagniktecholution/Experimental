@@ -7,6 +7,7 @@ import ast
 import sys
 import ai_helper
 
+
 # def get_data_types(input_string):
 #     values = input_string.split(',')
 #     data_types = []

@@ -37,7 +37,9 @@ jobs:
           curl_cmd="curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4"
 
           for file in $changed_files; do
-            curl_cmd="$curl_cmd --form files=@$file"
+            if [[ -f $file ]]; then
+              curl_cmd="$curl_cmd --form files=@$file"
+            fi
           done
 
           echo "Executing: $curl_cmd"
