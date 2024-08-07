@@ -1,9 +1,4 @@
-import os, sys
-
-def Func(x):
-    if x > 10:
-    print "X is greater than 10"
-    else:
-    print("X is less or equal to 10")
-    
-Func(15)
+import time
+def very_long_function_name_that_could_give_me_an_error_pro():
+    time.sleep(60)
+    return "jkob"
