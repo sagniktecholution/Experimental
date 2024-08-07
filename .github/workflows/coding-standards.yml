@@ -45,6 +45,13 @@ jobs:
           echo "Response: $response"
 
           # Extract details from response array
+          status=$(echo "$response" | jq -r '.status')
+
+          if [[ "$status" == "pass" ]]; then
+            echo "Status is pass. Skipping below commands."
+            exit 0
+          fi
+
           details=$(echo "$response" | jq -r '.details')
 
           # Loop through details and create PR comments
