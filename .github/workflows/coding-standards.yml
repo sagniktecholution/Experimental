@@ -57,7 +57,7 @@ jobs:
             exit 0
           fi
 
-          details=$(echo "$response" | jq -r '.details' || echo "[]")
+          details=$(echo "$response" | jq -r '.details')
 
           # Check if details is empty
           if [[ -z "$details" ]]; then
