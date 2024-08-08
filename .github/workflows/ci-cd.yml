@@ -1,7 +1,7 @@
 name: CI/CD
 
 on:
-  push:
+  pull_request:
     branches:
       - '*'
 
@@ -86,7 +86,7 @@ jobs:
           # Sample deploy to the server
           # ssh user@<SERVER_IP> "cd /path/to/project && git pull && npm install && npm run build"
 
-  push-ruleset-check:
+  pull-ruleset-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -95,7 +95,13 @@ jobs:
       - name: Get the commit SHA
         id: commit-sha
         run: echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
+        
+      - name: Get repository details
+        id: repo-details
+        run: |
+          echo "REPO_NAME=${{ github.repository }}" >> $GITHUB_ENV
+          echo "OWNER_NAME=${{ github.repository_owner }}" >> $GITHUB_ENV
+          
       - name: Get list of changed files
         id: changed-files
         uses: actions/github-script@v6
@@ -112,6 +118,22 @@ jobs:
             const changedFiles = comparison.files.map(file => file.filename);
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             core.setOutput('changedFiles', JSON.stringify(changedFiles));
+            
+      - name: Send repository and file details to endpoint
+        run: |
+          repo_name="${{ env.REPO_NAME }}"
+          owner_name="${{ env.OWNER_NAME }}"
+          changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
+
+          # Prepare JSON payload
+          payload=$(jq -n \
+            --arg repo_name "$repo_name" \
+            --arg owner_name "$owner_name" \
+            --argjson changed_files "$(echo "$changed_files" | jq -R . | jq -s .)" \
+            '{repo_name: $repo_name, owner_name: $owner_name, changed_files: $changed_files}')
+            
+          echo "Payload: $payload"
+          
       - name: Send changed files to endpoint
         run: |
           changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
