@@ -108,11 +108,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
-          CHANGED_FILES=$(curl -H "Accept: application/vnd.github.v3+json" \
+          const changedFiles=$(curl -H "Accept: application/vnd.github.v3+json" \
                -H "Authorization: token $GITHUB_TOKEN" \
                https://api.github.com/repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/files | jq -r '.[].filename')
-          console.log(`Changed files: ${JSON.stringify($CHANGED_FILES)}`);
-          core.setOutput('changedFiles', JSON.stringify($CHANGED_FILES));
+          console.log(`Changed files: ${JSON.stringify(changedFilesS)}`);
+          core.setOutput('changedFiles', JSON.stringify(changedFiles));
           
           
       - name: Send repository and file details to endpoint
