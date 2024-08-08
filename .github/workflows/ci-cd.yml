@@ -110,7 +110,7 @@ jobs:
         run: |
           CHANGED_FILES=$(curl -H "Accept: application/vnd.github.v3+json" \
                -H "Authorization: token $GITHUB_TOKEN" \
-               https://api.github.com/repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/files | jq -r '.[].filename')
+               https://api.github.com/repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/files)
           echo "changedFiles=$CHANGED_FILES" >> $GITHUB_ENV
           
           
