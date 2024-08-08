@@ -119,7 +119,7 @@ jobs:
           owner_name="${{ env.OWNER_NAME }}"
           pr_number="${{ env.PR_NUMBER }}"
           file_paths=$(echo '${{ env.changedFiles }}' | jq -R . | jq -s .)
-          echo "file_paths=$file_paths" >> $GITHUB_ENV
+
           # Prepare JSON payload
           payload=$(jq -n \
             --arg repo_name "$repo_name" \
@@ -132,7 +132,7 @@ jobs:
           
       - name: Send changed files to endpoint
         run: |
-          changed_files=$(echo '${{ env.file_paths }}' | jq -r '.[]')
+          changed_files=$(echo '${{ env.changedFiles }}' | jq -r '.[]')
           curl_cmd="curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4"
           for file in $changed_files; do
             curl_cmd="$curl_cmd --form files=@$file"
@@ -149,7 +149,7 @@ jobs:
       - name: Get content of changed files
         id: file-contents
         run: |
-          CHANGED_FILES=$(echo '${{ env.file_paths }}' | jq -r '.[]')
+          CHANGED_FILES=$(echo '${{ env.changedFiles }}' | jq -r '.[]')
           echo "Parsed changed files: $CHANGED_FILES"
           CONTENTS=""
           for FILE in $CHANGED_FILES; do
