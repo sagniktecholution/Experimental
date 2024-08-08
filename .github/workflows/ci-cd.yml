@@ -128,10 +128,8 @@ jobs:
           echo "Sending payload to API......."
           curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --data-raw "$payload" 
 
-      - name: Get content of changed files
-        id: file-contents
-        run: |
-          CHANGED_FILES=$(echo '${{ env.changedFiles }}' | jq -r '.[]')
+          echo  "Get content of changed files...."
+          CHANGED_FILES=$(echo $JSON_ARRAY | jq -r '.[]')
           echo "Parsed changed files: $CHANGED_FILES"
           CONTENTS=""
           for FILE in $CHANGED_FILES; do
