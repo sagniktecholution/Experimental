@@ -108,9 +108,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
         run: |
-          response=$(curl -H "Accept: application/vnd.github.v3+json" -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files)
-          CHANGED_FILES=$(echo "$response" | jq -r '.[].filename')
+          CHANGED_FILES=$(curl -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token $GITHUB_TOKEN" \
+               https://api.github.com/repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/files | jq -r '.[].filename')
           echo "changedFiles=$CHANGED_FILES" >> $GITHUB_ENV
+          
           
       - name: Send repository and file details to endpoint
         run: |
