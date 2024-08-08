@@ -1,0 +1,146 @@
+name: CI/CD
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  code-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Code lint
+        run: npm run lint
+
+  build:
+    needs: code-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+  test:
+    needs:
+      - code-check
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Test project
+        run: npm test
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    needs:
+      - code-check
+      - build
+      - test
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Deploy to server
+        id: deployment
+        run: |
+          # Sample deploy to the server
+          # ssh user@<SERVER_IP> "cd /path/to/project && git pull && npm install && npm run build"
+
+  pull-ruleset-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Get the commit SHA
+        id: commit-sha
+        run: echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
+        
+      - name: Get repository details
+        id: repo-details
+        run: |
+          echo "REPO_NAME=${{ github.repository }}" >> $GITHUB_ENV
+          echo "OWNER_NAME=${{ github.repository_owner }}" >> $GITHUB_ENV
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+
+      - name: Get list of changed files Send changed files to endpoint
+        id: changed-files
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+        run: |
+          CHANGED_FILES=$(curl -H "Accept: application/vnd.github.v3+json" \
+               -H "Authorization: token $GITHUB_TOKEN" \
+               https://api.github.com/repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/files | jq -r '.[].filename')
+          JSON_ARRAY=$(echo "$CHANGED_FILES" | jq -R . | jq -s .)
+          repo_name="${{ env.REPO_NAME }}"
+          owner_name="${{ env.OWNER_NAME }}"
+          pr_number="${{ env.PR_NUMBER }}"
+          
+          # Prepare JSON payload
+          payload=$(jq -n \
+            --arg repo_name "$repo_name" \
+            --arg owner_name "$owner_name" \
+            --arg pr_number "$pr_number" \
+            --argjson file_paths "$JSON_ARRAY" \
+            '{repo_name: $repo_name, owner_name: $owner_name, pr_number: $pr_number, file_paths: $file_paths}')
+            
+          echo "Payload: $payload"
+          echo "Sending payload to API......."
+          curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --data-raw "$payload" 
+
+          echo  "Get content of changed files...."
+          CHANGED_FILES=$(echo $JSON_ARRAY | jq -r '.[]')
+          echo "Parsed changed files: $CHANGED_FILES"
+          CONTENTS=""
+          for FILE in $CHANGED_FILES; do
+            if [ -f "$FILE" ]; then
+              CONTENT=$(cat "$FILE" | jq -Rs .)
+              echo "File: $FILE"
+              echo "$CONTENT"
+              CONTENTS="$CONTENTS{\"filename\":\"$FILE\",\"content\":$CONTENT},"
+            else
+              echo "File $FILE not found!"
+            fi
+          done
+          CONTENTS="[${CONTENTS%,}]"
+          echo "FILE_CONTENTS=$CONTENTS" >> $GITHUB_ENV
