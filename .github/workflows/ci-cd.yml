@@ -112,14 +112,6 @@ jobs:
                -H "Authorization: token $GITHUB_TOKEN" \
                https://api.github.com/repos/${{ github.repository }}/pulls/${{ env.PR_NUMBER }}/files | jq -r '.[].filename')
           JSON_ARRAY=$(echo "$CHANGED_FILES" | jq -R . | jq -s .)
-          {
-            echo 'JSON_FILES<<EOF'
-            $JSON_ARRAY
-            echo EOF
-          } >> "$GITHUB_ENV"
-          echo $JSON_ARRAY
-      - name: Send repository and file details to endpoint
-        run: |
           repo_name="${{ env.REPO_NAME }}"
           owner_name="${{ env.OWNER_NAME }}"
           pr_number="${{ env.PR_NUMBER }}"
@@ -129,7 +121,7 @@ jobs:
             --arg repo_name "$repo_name" \
             --arg owner_name "$owner_name" \
             --arg pr_number "$pr_number" \
-            --argjson file_paths "$JSON_FILES" \
+            --argjson file_paths "$JSON_ARRAY" \
             '{repo_name: $repo_name, owner_name: $owner_name, pr_number: $pr_number, file_paths: $file_paths}')
             
           echo "Payload: $payload"
