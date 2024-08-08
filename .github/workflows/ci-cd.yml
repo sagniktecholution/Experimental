@@ -101,7 +101,8 @@ jobs:
         run: |
           echo "REPO_NAME=${{ github.repository }}" >> $GITHUB_ENV
           echo "OWNER_NAME=${{ github.repository_owner }}" >> $GITHUB_ENV
-          
+          echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
+
       - name: Get list of changed files
         id: changed-files
         uses: actions/github-script@v6
@@ -123,14 +124,16 @@ jobs:
         run: |
           repo_name="${{ env.REPO_NAME }}"
           owner_name="${{ env.OWNER_NAME }}"
-          changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
+          pr_number="${{ env.PR_NUMBER }}"
+          file_paths=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
 
           # Prepare JSON payload
           payload=$(jq -n \
             --arg repo_name "$repo_name" \
             --arg owner_name "$owner_name" \
-            --argjson changed_files "$(echo "$changed_files" | jq -R . | jq -s .)" \
-            '{repo_name: $repo_name, owner_name: $owner_name, changed_files: $changed_files}')
+            --arg pr_number "$pr_number" \
+            --argjson file_paths "$(echo "$changed_files" | jq -R . | jq -s .)" \
+            '{repo_name: $repo_name, owner_name: $owner_name, pr_number: $pr_number, file_paths: $file_paths}')
             
           echo "Payload: $payload"
           
