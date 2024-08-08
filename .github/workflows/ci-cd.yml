@@ -115,7 +115,7 @@ jobs:
           repo_name="${{ env.REPO_NAME }}"
           owner_name="${{ env.OWNER_NAME }}"
           pr_number="${{ env.PR_NUMBER }}"
-
+          echo "CHANGED_FILES=$(echo $JSON_ARRAY | jq -r '.[]')" >> $GITHUB_ENV
           # Prepare JSON payload
           payload=$(jq -n \
             --arg repo_name "$repo_name" \
