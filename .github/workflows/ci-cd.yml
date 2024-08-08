@@ -103,7 +103,7 @@ jobs:
           echo "OWNER_NAME=${{ github.repository_owner }}" >> $GITHUB_ENV
           echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_ENV
 
-      - name: Get list of changed files
+      - name: Get list of changed files Send changed files to endpoint
         id: changed-files
         env:
           GITHUB_TOKEN: ${{ secrets.TOKEN }}
@@ -125,23 +125,9 @@ jobs:
             '{repo_name: $repo_name, owner_name: $owner_name, pr_number: $pr_number, file_paths: $file_paths}')
             
           echo "Payload: $payload"
-          
-      - name: Send changed files to endpoint
-        run: |
-          changed_files=$(echo '${{ env.JSON_FILES }}' )
-          curl_cmd="curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4"
-          for file in $changed_files; do
-            curl_cmd="$curl_cmd --form files=@$file"
-          done
-          echo "Executing: $curl_cmd"
-          response=$(eval $curl_cmd)
-          status=$(echo "$response" | jq -r '.status')
-          if [[ "$status" == "fail" ]]; then
-            details=$(echo "$response" | jq -r '.details')
-            echo "Error: Received status $status"
-            echo "details: Received details $details"
-            exit 1
-          fi
+          echo "Sending payload to API......."
+          curl --location 'https://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --data-raw "$payload" 
+
       - name: Get content of changed files
         id: file-contents
         run: |
