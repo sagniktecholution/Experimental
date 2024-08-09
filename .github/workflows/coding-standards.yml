@@ -35,7 +35,7 @@ jobs:
         run: |
           changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
 
-          curl_cmd="curl --location 'http://192.168.20.166:5002/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4 --form repo_name='${{ github.repository }}' --form owner_name='${{ github.repository_owner }}' --form pr_number='${{ github.event.number }}'"
+          curl_cmd="curl --location 'http://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4 --form repo_name='${{ github.repository }}' --form owner_name='${{ github.repository_owner }}' --form pr_number='${{ github.event.number }}'"
 
           file_paths=()
 
