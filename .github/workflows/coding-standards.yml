@@ -13,8 +13,9 @@ jobs:
 
       - name: Check Coding Standards
         run: |
-          curl_cmd="curl --location 'https://dev-editor.techo.camp/api/code/v1/standards/checks/repository/github/$${{ github.repository_owner }}/$${{github.repository}}/pull/$${{github.event.number}}?base=$${{ github.event.before }}&head=$${{ github.event.after }}' \
+          curl_cmd="curl --location 'https://dev-editor.techo.camp/api/code/v1/standards/checks/repository/github/${{github.repository}}/pull/${{ github.event.pull_request.number }}?base=${{ github.event.before }}&head=${{ github.event.after }}' \
             --request POST \
+            -- header 'Authorization: Bearer ${{secrets.GITHUB_TOKEN }}' \
             --header 'Content-Type: application/json'"
 
           echo "Executing: $curl_cmd"
