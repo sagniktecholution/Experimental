@@ -7,22 +7,21 @@ import ast
 import sys
 import ai_helper
 
+def get_data_types(input_string):
+    values = input_string.split(',')
+    data_types = []
 
-# def get_data_types(input_string):
-#     values = input_string.split(',')
-#     data_types = []
+    for value in values:
+        try:
+            # Try evaluating the literal expression using ast.literal_eval
+            evaluated_value = ast.literal_eval(value)
+            data_type = type(evaluated_value)
+            data_types.append(data_type)
+        except (SyntaxError, ValueError):
+            # If the literal expression cannot be evaluated, treat it as a string
+            data_types.append(str)
 
-#     for value in values:
-#         try:
-#             # Try evaluating the literal expression using ast.literal_eval
-#             evaluated_value = ast.literal_eval(value)
-#             data_type = type(evaluated_value)
-#             data_types.append(data_type)
-#         except (SyntaxError, ValueError):
-#             # If the literal expression cannot be evaluated, treat it as a string
-#             data_types.append(str)
-
-#     return data_types
+    return data_types
 
 def get_input_output_from_test_code(test_code):
     try:
