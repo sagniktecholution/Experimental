@@ -36,6 +36,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const FormData = require('form-data');
 
             const changedFiles = JSON.parse(
               '${{ steps.changed-files.outputs.changedFiles }}',
@@ -46,8 +47,7 @@ jobs:
 
 
             for (const file of changedFiles) {
-                const fileData = fs.readFileSync(file);
-                formData.append('files', fileData);
+                formData.append('files', fs.createReadStream(filePath));
                 file_paths.push(file);
             }
 
@@ -63,7 +63,7 @@ jobs:
               'https://dev-appmod.techo.camp/pr_push_check/css_validation_api',
               {
                 method: 'POST',
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: { ...form.getHeaders() },
                 body: formData,
               },
             );
