@@ -1,6 +1,5 @@
 import os, sys, math
 
-
 # bad function with bad spacing
 def   badFunction   (x,y):
   if x>0:
