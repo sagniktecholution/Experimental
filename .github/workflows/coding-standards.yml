@@ -46,7 +46,7 @@ jobs:
 
           for file in $changed_files; do
             if [ -f "$file" ]; then
-              curl_cmd="$curl_cmd --form files=@$file --form file_paths=$file"
+              curl_cmd="$curl_cmd --form files=@$file --form file_paths[]=$file"
             fi
           done
 
