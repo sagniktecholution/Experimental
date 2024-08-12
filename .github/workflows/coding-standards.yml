@@ -32,27 +32,48 @@ jobs:
             console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
             core.setOutput('changedFiles', JSON.stringify(changedFiles));
       - name: Send changed files to endpoint
-        run: |
-          changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
 
-          curl_cmd="curl --location 'http://dev-appmod.techo.camp/pr_push_check/css_validation_api' --header 'Content-Type: multipart/form-data' --form threshold=0.4 --form repo_name='${{ github.repository }}' --form owner_name='${{ github.repository_owner }}' --form pr_number='${{ github.event.number }}'"
+            const changedFiles = JSON.parse(
+              '${{ steps.changed-files.outputs.changedFiles }}',
+            );
 
-          file_paths=()
+            const formData = new FormData();
+            const file_paths = [...changedFiles];
 
-          for file in $changed_files; do
-            if [ -f "$file" ]; then
-              curl_cmd="$curl_cmd --form files=@$file"
-              file_paths+=("$file") 
-            fi
-          done
 
-          if [ ${#file_paths[@]} -gt 0 ]; then
-              curl_cmd="$curl_cmd --form file_paths=@$file_paths"
-          fi
+            for (const file of changedFiles) {
+                const fileData = await fs.promises.readFile(file);
+                formData.append('files', fileData);
+            }
 
-          echo "Executing: $curl_cmd"
-          response=$(eval $curl_cmd)
+            formData.append('file_paths', file_paths);
+            formData.append('threshold', '0.1');
+            formData.append('repo_name', ${{ github.repository }});
+            formData.append('owner_name', ${{ github.repository_owner }});
+            formData.append('pr_number', ${{ github.event.number }});
 
-          echo "Response: $response"
+            console.log('Form data:', formData);
+
+            const response = await fetch(
+              'https://dev-appmod.techo.camp/pr_push_check/css_validation_api',
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'multipart/form-data' },
+                body: formData,
+              },
+            );
+
+            console.log("Response:", response);
+
+            if (!response.ok) {
+              throw new Error('Failed to send changed files to endpoint');
+            }
+
+            const data = await response.json();
+            console.log('Data:', data);
 
 # --form 'files=@"/C:/Users/Mohak Khatri/Desktop/comment_script/repo/new.py"'
