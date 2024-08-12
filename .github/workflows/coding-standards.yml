@@ -42,12 +42,13 @@ jobs:
             );
 
             const formData = new FormData();
-            const file_paths = [...changedFiles];
+            const file_paths = [];
 
 
             for (const file of changedFiles) {
-                const fileData = await fs.promises.readFile(file);
+                const fileData = fs.readFileSync(file);
                 formData.append('files', fileData);
+                file_paths.push(file);
             }
 
             formData.append('file_paths', file_paths);
