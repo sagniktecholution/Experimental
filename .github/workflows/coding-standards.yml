@@ -11,46 +11,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Get the commit SHA
-        id: commit-sha
-        run: echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
-
-      - name: Get list of changed files
-        id: changed-files
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const baseSha = context.payload.before;
-            const headSha = context.payload.after;
-            const { data: comparison } = await github.rest.repos.compareCommits({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              base: baseSha,
-              head: headSha,
-            });
-            const changedFiles = comparison.files.map(file => file.filename);
-            console.log(`Changed files: ${JSON.stringify(changedFiles)}`);
-            core.setOutput('changedFiles', JSON.stringify(changedFiles));
-      - name: Send changed files to endpoint
-        env:
-          CSS_THRESHOLD: '0.1'
+      - name: Check Coding Standards
         run: |
-          changed_files=$(echo '${{ steps.changed-files.outputs.changedFiles }}' | jq -r '.[]')
-
-          curl_cmd="curl --location 'http://dev-appmod.techo.camp/pr_push_check/css_validation_api' \
-          --header 'Content-Type: multipart/form-data' \
-          --form threshold=${{ env.CSS_THRESHOLD }} \
-          --form repo_name='${{ github.repository }}' \
-          --form owner_name='${{ github.repository_owner }}' \
-          --form pr_number='${{ github.event.number }}'"
-
-          for file in $changed_files; do
-            if [ -f "$file" ]; then
-              curl_cmd="$curl_cmd --form files=@$file --form file_paths=$file"
-            fi
-          done
+          curl_cmd="curl --location 'https://dev-editor.techo.camp/api/code/v1/standards/checks/repository/github/${{github.repository}}/pull/${{ github.event.pull_request.number }}?base=${{ github.event.before }}&head=${{ github.event.after }}' \
+            --request POST \
+            --header 'Content-Type: application/json'"
 
           echo "Executing: $curl_cmd"
 
           response=$(eval $curl_cmd)
           echo "Response: $response"
+
+          css=$(echo "$response" | jq -r '.css')
+          echo "CSS Field: $css"
+
+            if (( $(echo "$css > 0.5" | bc -l) )); then
+            echo "Coding standard violations exceeds the max threshold."
+            exit 1
+            fi
