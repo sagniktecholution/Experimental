@@ -1,0 +1,31 @@
+name: PR Workflow
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  coding-standards-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Check Coding Standards
+        run: |
+          curl_cmd="curl --location 'https://dev-editor.techo.camp/api/code/v1/standards/checks/repository/github/${{github.repository}}/pull/${{ github.event.pull_request.number }}?base=${{ github.event.before }}&head=${{ github.event.after }}' \
+            --request POST \
+            --header 'Content-Type: application/json'"
+
+          echo "Executing: $curl_cmd"
+
+          response=$(eval $curl_cmd)
+          echo "Response: $response"
+
+          css=$(echo "$response" | jq -r '.css')
+          echo "CSS Field: $css"
+
+            if (( $(echo "$css > 0.5" | bc -l) )); then
+            echo "Coding standard violations exceeds the max threshold."
+            exit 1
+            fi
